@@ -7,7 +7,7 @@ Esta aplicación proporciona una interfaz gráfica para calcular integrales num�
 El proyecto está organizado de la siguiente manera:
 
 ```
-(Tu_Espacio_De_Trabajo)/          # Raíz del proyecto
+/          # Raíz del proyecto
 ├── main.py                         # Punto de entrada principal para la aplicación
 ├── integracion_numerical_app/      # Paquete principal de la aplicación
 │   ├── __init__.py

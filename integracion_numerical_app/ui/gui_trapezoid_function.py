@@ -14,62 +14,57 @@ class CalculadoraTrapecioUI:
         self.y_puntos_graf = None
         self.resultado_calculado = None
 
-        main_frame = ttk.Frame(root, padding="20", style='Main.TFrame')
+        main_frame = ttk.Frame(root, padding="20") # No necesita estilo 'Main.TFrame' si es solo fondo
         main_frame.pack(expand=True, fill=tk.BOTH)
-        main_frame.master.configure(bg='#f0f0f0')
+        # main_frame.master.configure(bg='#f0f0f0') # El root ya tiene este bg
 
-        style = ttk.Style(self.root) # Asociar con root
-        style.theme_use('clam') # Usar tema 'clam' para consistencia
+        style = ttk.Style(self.root)
+        style.theme_use('clam') 
 
-        style.configure('Main.TFrame', background='#f0f0f0')
-        style.configure('TLabel', background='#f0f0f0', font=('Arial', 11))
+        # Estilos generales que no afectan a los botones directamente
+        style.configure('.', background='#f0f0f0') # Estilo base para todos los widgets ttk
+        style.configure('TLabel', font=('Arial', 11)) # background='#f0f0f0' heredado
         style.configure('TEntry', font=('Arial', 11), padding=5)
-        
-        # Definir fuente y padding para botones
-        button_font = ('Arial', 11, 'bold')
-        button_padding = (10, 5) # (padx, pady) o un solo valor para todos los lados
+        # No se configuran estilos de botón personalizados aquí (Green, Red, Plot)
+        # Se usará el estilo por defecto 'TButton' de ttk
 
-        # Estilos explícitos para cada tipo de botón
-        style.configure('Green.TButton', font=button_font, padding=button_padding, foreground='white', background='green')
-        style.configure('Red.TButton', font=button_font, padding=button_padding, foreground='white', background='red')
-        style.configure('Plot.TButton', font=button_font, padding=button_padding, foreground='white', background='blue')
-
-        ttk.Label(main_frame, text="Función f(x):", style='TLabel').grid(row=0, column=0, padx=5, pady=10, sticky="w")
-        self.entrada_funcion = ttk.Entry(main_frame, width=40, style='TEntry')
+        ttk.Label(main_frame, text="Función f(x):").grid(row=0, column=0, padx=5, pady=10, sticky="w")
+        self.entrada_funcion = ttk.Entry(main_frame, width=40)
         self.entrada_funcion.grid(row=0, column=1, padx=5, pady=10, sticky="ew")
         self.entrada_funcion.insert(0, "x**3 * math.log(x)")
 
-        ttk.Label(main_frame, text="Límite inferior (a):", style='TLabel').grid(row=1, column=0, padx=5, pady=10, sticky="w")
-        self.entrada_a = ttk.Entry(main_frame, width=15, style='TEntry')
+        ttk.Label(main_frame, text="Límite inferior (a):").grid(row=1, column=0, padx=5, pady=10, sticky="w")
+        self.entrada_a = ttk.Entry(main_frame, width=15)
         self.entrada_a.grid(row=1, column=1, padx=5, pady=10, sticky="w")
         self.entrada_a.insert(0, "1")
 
-        ttk.Label(main_frame, text="Límite superior (b):", style='TLabel').grid(row=2, column=0, padx=5, pady=10, sticky="w")
-        self.entrada_b = ttk.Entry(main_frame, width=15, style='TEntry')
+        ttk.Label(main_frame, text="Límite superior (b):").grid(row=2, column=0, padx=5, pady=10, sticky="w")
+        self.entrada_b = ttk.Entry(main_frame, width=15)
         self.entrada_b.grid(row=2, column=1, padx=5, pady=10, sticky="w")
         self.entrada_b.insert(0, "3")
 
-        ttk.Label(main_frame, text="Número de subintervalos (N >=1):", style='TLabel').grid(row=3, column=0, padx=5, pady=10, sticky="w")
-        self.entrada_N = ttk.Entry(main_frame, width=15, style='TEntry')
+        ttk.Label(main_frame, text="Número de subintervalos (N >=1):").grid(row=3, column=0, padx=5, pady=10, sticky="w")
+        self.entrada_N = ttk.Entry(main_frame, width=15)
         self.entrada_N.grid(row=3, column=1, padx=5, pady=10, sticky="w")
         self.entrada_N.insert(0, "100")
 
-        button_frame = ttk.Frame(main_frame, style='Main.TFrame')
+        button_frame = ttk.Frame(main_frame)
         button_frame.grid(row=4, column=0, columnspan=2, pady=15)
 
-        self.boton_calcular = ttk.Button(button_frame, text="Calcular Integral", command=self.calcular_integral_trapecio, style='Green.TButton')
+        # Botones usan el estilo ttk.Button por defecto (no se especifica 'style=')
+        self.boton_calcular = ttk.Button(button_frame, text="Calcular Integral", command=self.calcular_integral_trapecio)
         self.boton_calcular.pack(side=tk.LEFT, padx=5)
 
-        self.boton_limpiar = ttk.Button(button_frame, text="Limpiar Campos", command=self.limpiar_campos, style='Red.TButton')
+        self.boton_limpiar = ttk.Button(button_frame, text="Limpiar Campos", command=self.limpiar_campos)
         self.boton_limpiar.pack(side=tk.LEFT, padx=5)
         
-        self.boton_graficar = ttk.Button(button_frame, text="Graficar Resultado", command=self.graficar_resultado, style='Plot.TButton', state=tk.DISABLED)
+        self.boton_graficar = ttk.Button(button_frame, text="Graficar Resultado", command=self.graficar_resultado, state=tk.DISABLED)
         self.boton_graficar.pack(side=tk.LEFT, padx=5)
 
-        ttk.Label(main_frame, text="Resultado:", style='TLabel').grid(row=5, column=0, padx=5, pady=10, sticky="w")
+        ttk.Label(main_frame, text="Resultado:").grid(row=5, column=0, padx=5, pady=10, sticky="w")
         self.texto_resultado = scrolledtext.ScrolledText(main_frame, height=15, width=70, wrap=tk.WORD, font=('Courier New', 10))
         self.texto_resultado.grid(row=6, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
-        self.texto_resultado.configure(state='disabled')
+        self.texto_resultado.configure(state='disabled', background='#ffffff') # Fondo blanco para área de texto
         
         main_frame.columnconfigure(1, weight=1)
 

@@ -5,33 +5,33 @@ import sys
 import os
 
 def lanzar_gui_simpson_funcion():
-    """Lanza la GUI de la calculadora de Simpson (función) y cierra el menú."""
+    """Lanza la GUI de la calculadora de Simpson (función)."""
     print("Lanzando la calculadora de Simpson 1/3 (Función f(x))...")
     try:
         subprocess.Popen([sys.executable, "-m", "integracion_numerical_app.ui.gui_simpson_function"])
         # La ventana del menú se destruirá si la llamada a Popen tiene éxito y root está disponible.
-        if 'root' in globals() and root.winfo_exists():
-            root.destroy()
+        # if 'root' in globals() and root.winfo_exists():
+        #     root.destroy()
     except Exception as e:
         messagebox.showerror("Error Inesperado", f"Ocurrió un error al lanzar la calculadora Simpson (Función f(x)): {e}")
 
 def lanzar_gui_trapecio_funcion():
-    """Lanza la GUI de la calculadora del Trapecio (función) y cierra el menú."""
+    """Lanza la GUI de la calculadora del Trapecio (función)."""
     print("Lanzando la calculadora del Trapecio (Función f(x))...")
     try:
         subprocess.Popen([sys.executable, "-m", "integracion_numerical_app.ui.gui_trapezoid_function"])
-        if 'root' in globals() and root.winfo_exists():
-            root.destroy()
+        # if 'root' in globals() and root.winfo_exists():
+        #     root.destroy()
     except Exception as e:
         messagebox.showerror("Error Inesperado", f"Ocurrió un error al lanzar la calculadora Trapecio (Función f(x)): {e}")
 
 def lanzar_gui_simpson_vectores():
-    """Lanza la GUI de la calculadora de Simpson (vectores) y cierra el menú."""
+    """Lanza la GUI de la calculadora de Simpson (vectores)."""
     print("Lanzando la calculadora de Simpson 1/3 (Vectores x,y)...")
     try:
         subprocess.Popen([sys.executable, "-m", "integracion_numerical_app.ui.gui_simpson_vectors"])
-        if 'root' in globals() and root.winfo_exists():
-            root.destroy()
+        # if 'root' in globals() and root.winfo_exists():
+        #     root.destroy()
     except Exception as e:
         messagebox.showerror("Error Inesperado", f"Ocurrió un error al lanzar la calculadora Simpson (Vectores x,y): {e}")
 
@@ -52,6 +52,7 @@ def start_main_menu_ui():
     # Estilo
     style = ttk.Style(root)
     style.theme_use('clam')
+    style.configure('.', background='#f0f0f0') # Fondo base
 
     # Frame principal
     main_frame = ttk.Frame(root, padding="20 20 20 20")
@@ -76,7 +77,7 @@ def start_main_menu_ui():
    
 
     # Usar lambda para asegurar que root.destroy() se llama correctamente al salir
-    boton_salir = ttk.Button(main_frame, text="Salir", command=lambda: root.destroy() if root else None, style="Menu.TButton")
+    boton_salir = ttk.Button(main_frame, text="Salir del Menú", command=lambda: root.destroy() if root and root.winfo_exists() else None, style="Menu.TButton")
     boton_salir.pack(fill=tk.X, pady=(15, 5))
 
     root.mainloop()

@@ -83,8 +83,16 @@ def calcular_integral():
         # Llamada a la función de lógica que ahora devuelve 4 valores
         # resultado_integral, detalles_str, puntos_x, puntos_y = integracion_simpson_funcion.simpson_funcion(funcion_str, a, b, N)
         retorno_calculo = integracion_simpson_funcion.simpson_funcion(funcion_str, a, b, N)
+        
+        if not (isinstance(retorno_calculo, tuple) and len(retorno_calculo) == 4):
+            messagebox.showerror("Error Interno",
+                                 f"La función de cálculo (Simpson Función) no devolvió el formato esperado.\nRecibido: {retorno_calculo}")
+            text_detalles_calculo.config(state=tk.NORMAL)
+            text_detalles_calculo.insert(tk.END, "Error: Fallo en la comunicación con el núcleo de cálculo.")
+            text_detalles_calculo.config(state=tk.DISABLED)
+            return
+            
         resultado_integral, detalles_str, puntos_x, puntos_y = retorno_calculo
-
 
         text_resultado_integral.config(state=tk.NORMAL)
         text_detalles_calculo.config(state=tk.NORMAL)
@@ -99,14 +107,13 @@ def calcular_integral():
             boton_graficar.config(state=tk.NORMAL) # Habilitar botón
         else:
             # detalles_str contiene el mensaje de error de la función core
-            messagebox.showerror("Error en Cálculo", detalles_str)
+            messagebox.showerror("Error en Cálculo (Simpson Función)", detalles_str)
             text_detalles_calculo.insert(tk.END, f"Error en el cálculo:\n{detalles_str}")
-
 
     except ValueError as ve:
         messagebox.showerror("Error de Validación", str(ve))
     except Exception as e:
-        messagebox.showerror("Error Inesperado", f"Ocurrió un error: {e}")
+        messagebox.showerror("Error Inesperado", f"Ocurrió un error: {type(e).__name__}: {e}")
     finally:
         text_resultado_integral.config(state=tk.DISABLED)
         text_detalles_calculo.config(state=tk.DISABLED)
@@ -154,12 +161,15 @@ def graficar_resultado_actual():
 
 # --- Configuración de la Ventana Principal ---
 root = tk.Tk()
-root.title("Calculadora de Integrales por Simpson 1/3")
+root.title("Calculadora de Integrales por Simpson 1/3 (Función)")
 root.geometry("700x750") # Ajustar tamaño según sea necesario
+root.configure(bg='#f0f0f0')
 
 # Estilo
 style = ttk.Style(root)
 style.theme_use('clam') # 'clam', 'alt', 'default', 'classic'
+style.configure('.', background='#f0f0f0', font=('Arial', 11)) # Estilo base, fuente para labels
+style.configure('TEntry', font=('Arial', 11), padding=5)
 
 # Frame principal para organizar los widgets
 main_frame = ttk.Frame(root, padding="10 10 10 10")
@@ -210,18 +220,13 @@ entry_N.insert(0, "100") # Ejemplo
 frame_botones = ttk.Frame(main_frame)
 frame_botones.pack(pady=15)
 
-boton_calcular = ttk.Button(frame_botones, text="Calcular Integral", command=calcular_integral, style="Accent.TButton")
-# boton_calcular.pack(pady=15) # Modificado para estar en frame_botones
+boton_calcular = ttk.Button(frame_botones, text="Calcular Integral", command=calcular_integral)
 boton_calcular.pack(side=tk.LEFT, padx=5)
 
-style.configure("Accent.TButton", font=("Arial", 12, "bold"), padding=10) # Estilo para el botón principal
-style.configure("Plot.TButton", font=("Arial", 12), padding=10) # Estilo para el botón de graficar
-style.configure("Clear.TButton", font=("Arial", 12), padding=10) # Estilo para el botón de limpiar
-
-boton_graficar = ttk.Button(frame_botones, text="Graficar", command=graficar_resultado_actual, style="Plot.TButton", state=tk.DISABLED)
+boton_graficar = ttk.Button(frame_botones, text="Graficar", command=graficar_resultado_actual, state=tk.DISABLED)
 boton_graficar.pack(side=tk.LEFT, padx=5)
 
-boton_limpiar_gui = ttk.Button(frame_botones, text="Limpiar", command=limpiar_todo, style="Clear.TButton")
+boton_limpiar_gui = ttk.Button(frame_botones, text="Limpiar", command=limpiar_todo)
 boton_limpiar_gui.pack(side=tk.LEFT, padx=5)
 
 
@@ -233,13 +238,13 @@ frame_resultados.columnconfigure(0, weight=1) # Para que el ScrolledText se expa
 # Resultado de la Integral
 label_resultado_integral = ttk.Label(frame_resultados, text="Aproximación de la Integral:")
 label_resultado_integral.grid(row=0, column=0, padx=5, pady=(5,0), sticky=tk.W)
-text_resultado_integral = scrolledtext.ScrolledText(frame_resultados, height=2, width=60, wrap=tk.WORD, state=tk.DISABLED, font=("Courier New", 10))
+text_resultado_integral = scrolledtext.ScrolledText(frame_resultados, height=2, width=60, wrap=tk.WORD, state=tk.DISABLED, font=("Courier New", 10), background='#ffffff')
 text_resultado_integral.grid(row=1, column=0, padx=5, pady=(0,10), sticky=tk.EW)
 
 # Detalles del Cálculo
 label_detalles_calculo = ttk.Label(frame_resultados, text="Detalles del Cálculo:")
 label_detalles_calculo.grid(row=2, column=0, padx=5, pady=(5,0), sticky=tk.W)
-text_detalles_calculo = scrolledtext.ScrolledText(frame_resultados, height=15, width=80, wrap=tk.WORD, state=tk.DISABLED, font=("Courier New", 10))
+text_detalles_calculo = scrolledtext.ScrolledText(frame_resultados, height=15, width=80, wrap=tk.WORD, state=tk.DISABLED, font=("Courier New", 10), background='#ffffff')
 text_detalles_calculo.grid(row=3, column=0, padx=5, pady=(0,5), sticky=tk.NSEW)
 frame_resultados.rowconfigure(3, weight=1) # Para que el ScrolledText de detalles se expanda
 

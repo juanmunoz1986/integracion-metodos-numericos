@@ -1,6 +1,59 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import inspect
+import math
+
+# START NEW CODE
+class MathNamespace:
+    pass
+
+# Popular el namespace con funciones de numpy que imitan las funciones del módulo math
+# Esto hace que funcionen automáticamente con arrays de numpy.
+_safe_math_namespace = MathNamespace()
+_safe_math_namespace.acos = np.arccos
+_safe_math_namespace.acosh = np.arccosh
+_safe_math_namespace.asin = np.arcsin
+_safe_math_namespace.asinh = np.arcsinh
+_safe_math_namespace.atan = np.arctan
+_safe_math_namespace.atan2 = np.arctan2
+_safe_math_namespace.atanh = np.arctanh
+_safe_math_namespace.ceil = np.ceil
+_safe_math_namespace.copysign = np.copysign
+_safe_math_namespace.cos = np.cos
+_safe_math_namespace.cosh = np.cosh
+_safe_math_namespace.degrees = np.degrees
+_safe_math_namespace.exp = np.exp
+_safe_math_namespace.fabs = np.fabs # Nota: np.abs es más general, pero fabs es específico de float.
+_safe_math_namespace.floor = np.floor
+_safe_math_namespace.fmod = np.fmod
+# _safe_math_namespace.frexp = np.frexp # np.frexp devuelve dos arrays, manejar si es necesario
+_safe_math_namespace.hypot = np.hypot
+_safe_math_namespace.isclose = np.isclose
+_safe_math_namespace.isfinite = np.isfinite
+_safe_math_namespace.isinf = np.isinf
+_safe_math_namespace.isnan = np.isnan
+# _safe_math_namespace.ldexp = np.ldexp # np.ldexp es ufunc
+_safe_math_namespace.log = np.log
+_safe_math_namespace.log10 = np.log10
+_safe_math_namespace.log1p = np.log1p
+_safe_math_namespace.log2 = np.log2
+# _safe_math_namespace.modf = np.modf # np.modf devuelve dos arrays, manejar si es necesario
+_safe_math_namespace.pow = np.power
+_safe_math_namespace.radians = np.radians
+_safe_math_namespace.sin = np.sin
+_safe_math_namespace.sinh = np.sinh
+_safe_math_namespace.sqrt = np.sqrt
+_safe_math_namespace.tan = np.tan
+_safe_math_namespace.tanh = np.tanh
+_safe_math_namespace.trunc = np.trunc # np.trunc es equivalente a int() para positivos, np.fix más general
+
+# Constantes
+_safe_math_namespace.pi = np.pi
+_safe_math_namespace.e = np.e
+_safe_math_namespace.tau = getattr(np, 'tau', 2 * np.pi) # tau no está en todas las versiones de numpy
+_safe_math_namespace.inf = np.inf
+_safe_math_namespace.nan = np.nan
+# END NEW CODE
 
 def plot_function_and_integral(func_str, a, b, N, result, x_points_method=None, y_points_method=None, method_name=""):
     """
@@ -17,8 +70,10 @@ def plot_function_and_integral(func_str, a, b, N, result, x_points_method=None, 
         method_name (str, optional): Nombre del método numérico para el título.
     """
     # Namespace para evaluar la función de forma segura
-    # Permitimos funciones de numpy y la constante 'e'
+    # Permitimos funciones de numpy, math (a través de _safe_math_namespace) y la constante 'e'
     safe_dict = {
+        "np": np,
+        "math": _safe_math_namespace,
         "sin": np.sin, "cos": np.cos, "tan": np.tan,
         "asin": np.arcsin, "acos": np.arccos, "atan": np.arctan,
         "sinh": np.sinh, "cosh": np.cosh, "tanh": np.tanh,
