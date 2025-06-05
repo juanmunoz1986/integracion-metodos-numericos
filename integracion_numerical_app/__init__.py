@@ -1,0 +1,1 @@
+# Este archivo convierte el directorio 'integracion_numerical_app' en un paquete Python. 

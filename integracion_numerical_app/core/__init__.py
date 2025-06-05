@@ -1,0 +1,1 @@
+# Este archivo convierte el directorio 'core' en un sub-paquete de Python. 
