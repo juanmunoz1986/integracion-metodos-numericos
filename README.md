@@ -37,3 +37,28 @@ El proyecto está organizado de la siguiente manera:
     ```
 
 Esto abrirá la ventana del menú principal, desde donde podrás seleccionar el método de integración deseado. 
+
+## Cómo Ejecutar la Interfaz Web (Gradio) (Rama: web)
+
+Esta sección aplica si estás en la rama `web` del repositorio, la cual incluye una interfaz de usuario web alternativa construida con Gradio.
+
+1.  **Asegúrate de estar en la rama `web`**.
+
+2.  **Instala o actualiza las dependencias**: Si es la primera vez que usas esta rama o si las dependencias han cambiado, instala los requisitos desde la terminal en el directorio raíz del proyecto:
+    ```bash
+    pip install -r requirements.txt
+    ```
+    Esto asegurará que tengas `gradio`, `matplotlib`, y `numpy` instalados.
+
+3.  **Ejecuta la aplicación Gradio**: Desde el directorio raíz del proyecto, ejecuta el siguiente comando en tu terminal:
+    ```bash
+    python gradio_app.py
+    ```
+
+4.  **Abre la interfaz en tu navegador**: Después de ejecutar el comando, verás un mensaje en la terminal similar a:
+    ```
+    Running on local URL:  http://127.0.0.1:7860
+    ```
+    (El número de puerto puede variar).
+    Abre esta URL en tu navegador web para interactuar con la calculadora de integrales.
+    Si ejecutas con `iface.launch(share=True)` en `gradio_app.py`, también obtendrás un enlace público temporal para compartir. 
