@@ -24,67 +24,56 @@ _SAFE_DICT_GRADIO = {
     # 'x' se añadirá dinámicamente al diccionario antes de la llamada a eval()
 }
 
-# START NEW HELPER FUNCTION
-def formatear_detalles_a_markdown(detalles_str):
-    """
-    Convierte la cadena de detalles del cálculo a formato Markdown.
-    """
-    if not detalles_str:
-        return "No hay detalles disponibles."
-
-    # Reemplazar dobles barras invertidas \n (que son \n en la cadena) por <br> para saltos de línea HTML
-    # Esto es más robusto en Markdown para asegurar saltos de línea donde se esperan.
-    md_str = detalles_str.replace("\\n", "<br>") # Corregido para reemplazar la secuencia literal \n
-
-    # Formatear la tabla de puntos
-    # Buscar la sección de la tabla
-    tabla_match = re.search(r"(Tabla de evaluación de la función en los puntos:<br>)(Índice.*?)(<br><br>Suma completa)", md_str, re.DOTALL)
+# START NEW HELPER FUNCTIONS
+def _formatear_seccion_principal_markdown(seccion_bruta_str):
+    md_str = seccion_bruta_str.replace("\\n", "<br>")
     
+    tabla_match = re.search(r"(Tabla de evaluación de la función en los puntos:<br>)(.*?)(<br><br>|$)", md_str, re.DOTALL)
     if tabla_match:
         prefijo_tabla = tabla_match.group(1)
         contenido_tabla_bruto = tabla_match.group(2)
         sufijo_tabla = tabla_match.group(3)
 
-        lineas_tabla = contenido_tabla_bruto.strip().split("<br>")
+        lineas_tabla_brutas = contenido_tabla_bruto.strip().split("<br>")
+        tabla_markdown_interna = ""
         
-        tabla_markdown = prefijo_tabla # Mantener el título de la tabla
-        
-        if len(lineas_tabla) > 1: # Encabezado y al menos una línea de separador/datos
-            # Encabezado
-            encabezado = lineas_tabla[0].strip()
-            # Limpiar y asegurar que sea una fila de tabla Markdown
-            columnas_encabezado = [col.strip() for col in encabezado.split('|')]
-            tabla_markdown += f"| {' | '.join(columnas_encabezado)} |<br>" # Añadir pipes al inicio/final si no están
-            
-            # Separador Markdown (ajustar número de columnas si es necesario)
-            num_cols = len(columnas_encabezado)
-            tabla_markdown += f"|{'---|' * num_cols}<br>"
-            
-            # Filas de datos (desde la línea 2, asumiendo que la línea 1 es el separador "---")
-            for linea_datos in lineas_tabla[2:]: # Saltar la línea de "-------"
-                linea_datos = linea_datos.strip()
-                if not linea_datos or linea_datos.startswith("----"): # Ignorar líneas vacías o separadores extra
-                    continue
-                columnas_datos = [col.strip() for col in linea_datos.split('|')]
-                tabla_markdown += f"| {' | '.join(columnas_datos)} |<br>"
-            
-            # Recomponer la cadena con la tabla formateada
-            md_str = tabla_markdown + sufijo_tabla
-        else: # Si la tabla no tiene el formato esperado, mostrarla tal cual (ya con <br>)
-            md_str = prefijo_tabla + contenido_tabla_bruto + sufijo_tabla
-            
-    # Envolver la sección de "Suma completa" en un bloque de código para preservar el formato
-    # o simplemente asegurar que los <br> hagan su trabajo.
-    # Por ahora, los <br> deberían ser suficientes para la legibilidad de las sumas.
+        if len(lineas_tabla_brutas) > 1: # Debe haber encabezado y al menos el separador original
+            encabezado_original = lineas_tabla_brutas[0].strip()
+            columnas_encabezado_raw = [col.strip() for col in encabezado_original.split('|')]
+            columnas_encabezado = [c for c in columnas_encabezado_raw if c]
+            if columnas_encabezado:
+                tabla_markdown_interna += f"| {' | '.join(columnas_encabezado)} |<br>"
+                num_cols = len(columnas_encabezado)
+                tabla_markdown_interna += f"|{'---:|' * num_cols}<br>"
 
-    # Añadir algunos encabezados Markdown para mejorar la estructura general
+                # Procesar filas de datos (saltando encabezado original y su línea '---')
+                for linea_datos_str in lineas_tabla_brutas[2:]: 
+                    linea_datos_str = linea_datos_str.strip()
+                    if not linea_datos_str or linea_datos_str.startswith("----"): continue
+                    columnas_datos_raw = [col.strip() for col in linea_datos_str.split('|')]
+                    columnas_datos = [c for c in columnas_datos_raw if c] 
+                    if columnas_datos:
+                        tabla_markdown_interna += f"| {' | '.join(columnas_datos)} |<br>"
+            
+            md_str = prefijo_tabla + tabla_markdown_interna + sufijo_tabla
+    
     md_str = md_str.replace("Método del Trapecio", "### Método del Trapecio")
     md_str = md_str.replace("Cálculo de h:", "#### Cálculo de h:")
-    md_str = md_str.replace("Tabla de evaluación de la función en los puntos:", "#### Tabla de evaluación de la función en los puntos:")
-    md_str = md_str.replace("Suma completa (según la fórmula del Trapecio):", "#### Suma completa (según la fórmula del Trapecio):")
+    # El título "Tabla de evaluación..." ya está en prefijo_tabla
+    return md_str.strip()
+
+def _formatear_seccion_suma_markdown(seccion_bruta_str):
+    if not seccion_bruta_str or not seccion_bruta_str.strip():
+        return "_No se generaron detalles de la suma._"
     
-    return md_str
-# END NEW HELPER FUNCTION
+    # El título "Suma completa..." ya está incluido en seccion_bruta_str desde la división
+    md_output = "### Desglose de la Suma (Método del Trapecio)\n"
+    md_output += "```text\n"
+    suma_limpia = seccion_bruta_str.replace("\\n", "\n").strip()
+    md_output += suma_limpia
+    md_output += "\n```"
+    return md_output
+# END NEW HELPER FUNCTIONS
 
 def calcular_y_graficar_trapecio_gradio(func_str_usuario, limite_a, limite_b, num_intervalos):
     """
@@ -93,18 +82,18 @@ def calcular_y_graficar_trapecio_gradio(func_str_usuario, limite_a, limite_b, nu
     """
     if not all([func_str_usuario, limite_a is not None, limite_b is not None, num_intervalos is not None]):
         # Devolver mensaje de error para ambos outputs si es un error de validación temprano
-        return "Error: Todos los campos son obligatorios.", None 
+        return "Error: Todos los campos son obligatorios.", None, "_Error en cálculo, no hay desglose de suma disponible._"
     try:
         a = float(limite_a)
         b = float(limite_b)
         N = int(num_intervalos)
     except ValueError:
-        return "Error: Los límites 'a', 'b' y el número 'N' deben ser numéricos.", None
+        return "Error: Los límites 'a', 'b' y el número 'N' deben ser numéricos.", None, "_Error en cálculo, no hay desglose de suma disponible._"
 
     if N <= 0:
-        return "Error: 'N' debe ser un entero positivo.", None
+        return "Error: 'N' debe ser un entero positivo.", None, "_Error en cálculo, no hay desglose de suma disponible._"
     if a >= b:
-        return "Error: El límite 'a' debe ser menor que 'b'.", None
+        return "Error: El límite 'a' debe ser menor que 'b'.", None, "_Error en cálculo, no hay desglose de suma disponible._"
 
     # Limpiar la figura de Matplotlib al inicio de cada llamada para evitar superposiciones
     plt.clf()
@@ -116,7 +105,7 @@ def calcular_y_graficar_trapecio_gradio(func_str_usuario, limite_a, limite_b, nu
         integral_valor, detalles_calculo_bruto, x_metodo, y_metodo = trapecio_funcion(func_str_usuario, a, b, N)
 
         # Formatear detalles para Markdown ANTES de usarlos o devolverlos
-        detalles_formateados_md = formatear_detalles_a_markdown(detalles_calculo_bruto)
+        detalles_formateados_md = _formatear_seccion_principal_markdown(detalles_calculo_bruto)
 
         # Si la función del core devuelve None para integral_valor, indica un error en el cálculo
         if integral_valor is None:
@@ -126,7 +115,7 @@ def calcular_y_graficar_trapecio_gradio(func_str_usuario, limite_a, limite_b, nu
                     horizontalalignment='center', verticalalignment='center', 
                     transform=ax.transAxes, color='red', bbox=dict(boxstyle="round,pad=0.3", fc="pink", alpha=0.8))
             ax.set_title("Error en Cálculo del Método")
-            return detalles_formateados_md, fig # Devolver el error formateado y la figura con el error
+            return f"### Error en Cálculo<br>{detalles_formateados_md}", fig, "_Error en cálculo, no hay desglose de suma disponible._"
 
         # 2. Preparar la gráfica
         # Evaluar la función del usuario para una curva suave
@@ -177,9 +166,18 @@ def calcular_y_graficar_trapecio_gradio(func_str_usuario, limite_a, limite_b, nu
         salida_texto_principal = f"### Resultado de la Integral\n**Valor aproximado: {integral_valor:.8f}**\n\n"
         
         # Combinar con los detalles formateados
-        salida_markdown_completa = salida_texto_principal + detalles_formateados_md
+        md_principal_final = salida_texto_principal + detalles_formateados_md
         
-        return salida_markdown_completa, fig
+        # Dividir detalles_calculo_bruto en sección principal y sección de suma
+        partes_detalles = detalles_calculo_bruto.split("Suma completa (según la fórmula del Trapecio):", 1)
+        seccion_principal_bruta = partes_detalles[0]
+        seccion_suma_bruta = ""
+        if len(partes_detalles) > 1:
+            seccion_suma_bruta = "Suma completa (según la fórmula del Trapecio):" + partes_detalles[1]
+
+        md_suma_completa = _formatear_seccion_suma_markdown(seccion_suma_bruta)
+        
+        return md_principal_final, fig, md_suma_completa
 
     except Exception as e:
         # Captura errores de trapecio_funcion o cualquier otro imprevisto
@@ -189,41 +187,59 @@ def calcular_y_graficar_trapecio_gradio(func_str_usuario, limite_a, limite_b, nu
                 transform=ax.transAxes, color='red', bbox=dict(boxstyle="round,pad=0.3", fc="pink", alpha=0.8))
         ax.set_title("Error en la Operación")
         # Devolver el error formateado para que se muestre en el área de Markdown
-        return f"### Error\n{error_msg_general}", fig
+        return f"### Error<br>{error_msg_general}", fig, f"_Error general, no hay desglose de suma: {error_msg_general}_"
 
+# MODIFICACIÓN PRINCIPAL: Usar gr.Blocks para el layout
+with gr.Blocks(theme=gr.themes.Soft()) as demo:
+    gr.Markdown("## Calculadora de Integrales con Gradio - Método del Trapecio")
+    gr.Markdown("Ingresa una función en términos de 'x'. Puedes usar funciones de 'np' o 'math' (ej. np.sin(x), math.log(x)). La sintaxis de Python es esperada (ej. '**' para potencias).")
+    
+    with gr.Row():
+        with gr.Column(scale=1): # Columna de Entradas
+            input_funcion = gr.Textbox(label="Función f(x) (ej. x**2)", value="e**x**2")
+            input_a = gr.Number(label="Límite inferior (a)", value=0)
+            input_b = gr.Number(label="Límite superior (b)", value=1)
+            input_N = gr.Number(label="Número de subintervalos (N >=1)", value=10, minimum=1, precision=0)
+            
+            with gr.Row():
+                btn_clear = gr.Button("Clear")
+                btn_submit = gr.Button("Submit", variant="primary")
+                
+        with gr.Column(scale=2): # Columna de Salidas (más ancha)
+            output_principal_md = gr.Markdown(label="Resultado y Detalles de Evaluación")
+            output_plot = gr.Plot(label="Gráfica de la Función e Integral")
+            output_suma_md = gr.Markdown(label="Desglose de la Suma (Método del Trapecio)")
 
-# Crear la interfaz Gradio
-iface = gr.Interface(
-    fn=calcular_y_graficar_trapecio_gradio,
-    inputs=[
-        gr.Textbox(label="Función f(x) (ej. x**2 * np.sin(x) o x**3 * math.log(x))", value="x**3 * math.log(x)"),
-        gr.Number(label="Límite inferior (a)", value=1.0),
-        gr.Number(label="Límite superior (b)", value=3.0),
-        gr.Number(label="Número de subintervalos (N >=1)", value=100, minimum=1, precision=0) # precision=0 para entero
-    ],
-    outputs=[
-        gr.Markdown(label="Resultado y Detalles"), # MODIFICADO: Usar gr.Markdown
-        gr.Plot(label="Gráfica de la Función e Integral")
-    ],
-    title="Calculadora de Integrales con Gradio - Método del Trapecio",
-    description="Ingresa una función en términos de 'x'. Puedes usar funciones de 'np' o 'math' (ej. np.sin(x), math.log(x)). La sintaxis de Python es esperada (ej. '**' para potencias).",
-    allow_flagging='never',
-    examples=[
-        ["np.sin(x)", 0, np.pi, 50],
-        ["x**2", 0, 1, 100],
-        ["math.exp(-x**2)", -1, 1, 200],
-        ["1/(1+x**2)", -5, 5, 100],
-        ["x**3 * math.log(x)", 1, 3, 100]
-    ],
-    article="""
-    ### Notas de Uso:
-    - La variable independiente debe ser 'x'.
-    - Para funciones matemáticas, usa prefijo `np.` o `math.` (ej. `np.sin(x)`, `math.log(x)`). Ambos se resuelven a funciones de NumPy.
-    - La potencia es `**` (ej. `x**2` para x al cuadrado).
-    - Asegúrate de que el límite inferior 'a' sea menor que el límite superior 'b'.
-    - 'N' debe ser al menos 1.
-    """
-)
+    # Acciones de los botones
+    btn_submit.click(
+        fn=calcular_y_graficar_trapecio_gradio,
+        inputs=[input_funcion, input_a, input_b, input_N],
+        outputs=[output_principal_md, output_plot, output_suma_md]
+    )
+    
+    # Acción del botón Clear (limpia todos los campos de entrada y salida)
+    all_inputs = [input_funcion, input_a, input_b, input_N]
+    all_outputs = [output_principal_md, output_plot, output_suma_md]
+    
+    def clear_fields():
+        # Para los inputs, los reseteamos a un valor por defecto o vacío
+        # Para los outputs, los reseteamos a None o un string vacío
+        return ["e**x**2", 0, 1, 10, # Valores por defecto para inputs
+                None, None, None] # None para outputs los limpiará
+                
+    btn_clear.click(fn=clear_fields, inputs=None, outputs=all_inputs + all_outputs)
+
+    # Definir ejemplos (esto es un poco diferente con Blocks)
+    gr.Examples(
+        examples=[
+            ["np.sin(x)", 0, np.pi, 50],
+            ["x**2", 0, 1, 100],
+            ["math.exp(-x**2)", -1, 1, 200],
+            ["1/(1+x**2)", -5, 5, 100],
+            ["x**3 * math.log(x)", 1, 3, 100]
+        ],
+        inputs=all_inputs # Los ejemplos se aplicarán a estos inputs
+    )
 
 if __name__ == '__main__':
     # Añadir el directorio del proyecto al PYTHONPATH para asegurar que el paquete sea encontrable
@@ -254,4 +270,4 @@ if __name__ == '__main__':
         # y si 'integracion_numerical_app' es un directorio en la raíz con un __init__.py,
         # la importación 'from integracion_numerical_app...' debería funcionar.
 
-    iface.launch() 
+    demo.launch() 
